@@ -37,9 +37,9 @@ class RateRequest(BaseModel):
     dest_country: str
     weight: float
     weight_unit: str = "LBS"        # LBS or KGS
-    length: float
-    width: float
-    height: float
+    length: float = 0
+    width: float = 0
+    height: float = 0
     dim_unit: str = "IN"            # IN or CM
     ship_date: str                  # YYYY-MM-DD
     signature_required: bool = False
@@ -153,6 +153,7 @@ async def get_ups_rates(req: RateRequest) -> List[RateResult]:
         length_in  = round(to_inches(req.length, req.dim_unit), 1)
         width_in   = round(to_inches(req.width,  req.dim_unit), 1)
         height_in  = round(to_inches(req.height, req.dim_unit), 1)
+        has_dims   = length_in > 0 and width_in > 0 and height_in > 0
 
         pkg_options: dict = {}
         if req.signature_required:
@@ -187,12 +188,12 @@ async def get_ups_rates(req: RateRequest) -> List[RateResult]:
                     },
                     "Package": {
                         "PackagingType": {"Code": "02"},
-                        "Dimensions": {
+                        **({"Dimensions": {
                             "UnitOfMeasurement": {"Code": "IN"},
                             "Length": str(length_in),
                             "Width":  str(width_in),
                             "Height": str(height_in),
-                        },
+                        }} if has_dims else {}),
                         "PackageWeight": {
                             "UnitOfMeasurement": {"Code": "LBS"},
                             "Weight": str(weight_lbs),
@@ -344,6 +345,7 @@ async def get_fedex_rates(req: RateRequest) -> List[RateResult]:
         length_cm = round(to_cm(req.length, req.dim_unit))
         width_cm  = round(to_cm(req.width,  req.dim_unit))
         height_cm = round(to_cm(req.height, req.dim_unit))
+        has_dims  = length_cm > 0 and width_cm > 0 and height_cm > 0
 
         pkg_svc_types: list = []
         ship_svc_types: list = []
@@ -357,12 +359,12 @@ async def get_fedex_rates(req: RateRequest) -> List[RateResult]:
 
         package = {
             "weight": {"units": "KG", "value": weight_kg},
-            "dimensions": {
+            **({"dimensions": {
                 "length": length_cm,
                 "width":  width_cm,
                 "height": height_cm,
                 "units": "CM",
-            },
+            }} if has_dims else {}),
         }
         if pkg_svc_types:
             package["packageSpecialServices"] = {
@@ -495,6 +497,7 @@ async def get_dhl_rates(req: RateRequest) -> List[RateResult]:
         length_cm = round(to_cm(req.length, req.dim_unit), 1)
         width_cm  = round(to_cm(req.width,  req.dim_unit), 1)
         height_cm = round(to_cm(req.height, req.dim_unit), 1)
+        has_dims  = length_cm > 0 and width_cm > 0 and height_cm > 0
 
         params = {
             "originCountryCode":      req.origin_country,
@@ -502,9 +505,7 @@ async def get_dhl_rates(req: RateRequest) -> List[RateResult]:
             "destinationCountryCode": req.dest_country,
             "destinationPostalCode":  req.dest_zip,
             "weight":                 weight_kg,
-            "length":                 length_cm,
-            "width":                  width_cm,
-            "height":                 height_cm,
+            **({"length": length_cm, "width": width_cm, "height": height_cm} if has_dims else {}),
             "plannedShippingDateAndTime": f"{req.ship_date}T12:00:00 GMT+00:00",
             "isCustomsDeclarable":    "false",
             "unitOfMeasurement":      "metric",

@@ -3,33 +3,36 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>RATE FINDER — Parcel Shipping Rates</title>
+<title>Honeywell — Parcel Rate Finder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   :root {
-    --bg:          #080c12;
-    --surface:     #0f1520;
-    --surface2:    #172030;
-    --surface3:    #1e2a3d;
-    --border:      #253045;
-    --border-dim:  #1a2438;
-    --amber:       #f0a500;
-    --amber-glow:  rgba(240,165,0,0.12);
-    --amber-dim:   #b07c00;
-    --text:        #dde6f4;
-    --text-dim:    #7a8ba8;
-    --text-faint:  #3d4f68;
-    --red:         #e05555;
-    --green:       #4eca7e;
+    /* ── Honeywell Brand Colors ── */
+    --bg:          #141414;
+    --surface:     #1e1e1e;
+    --surface2:    #272727;
+    --surface3:    #313131;
+    --border:      #464646;
+    --border-dim:  #313131;
+    --red:         #d22630;   /* Honeywell Digital Red */
+    --red-glow:    rgba(210,38,48,0.14);
+    --red-dim:     #a01c24;
+    --blue:        #007BC2;   /* Honeywell Medium Blue – CTA */
+    --blue-glow:   rgba(0,123,194,0.14);
+    --text:        #ffffff;
+    --text-dim:    #a0a0a0;   /* Honeywell Grey */
+    --text-faint:  #464646;   /* Honeywell Dark Grey */
+    --error:       #d22630;
+    --green:       #7EB338;   /* Honeywell Light Green */
     --ups:         #c2672d;
     --fedex:       #7b3fbf;
     --dhl:         #d4a800;
     --mono:        'DM Mono', monospace;
-    --head:        'Oswald', sans-serif;
+    --head:        'Barlow Condensed', sans-serif;
     --body:        'Barlow', sans-serif;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -60,7 +63,7 @@
   }
   .logo-icon {
     width: 32px; height: 32px;
-    background: var(--amber);
+    background: var(--red);
     clip-path: polygon(0 20%, 50% 0, 100% 20%, 100% 80%, 50% 100%, 0 80%);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
@@ -146,8 +149,8 @@
     padding: 1rem;
   }
   .panel.highlighted {
-    border-color: rgba(240,165,0,0.2);
-    background: linear-gradient(135deg, var(--surface2) 0%, rgba(240,165,0,0.04) 100%);
+    border-color: rgba(210,38,48,0.2);
+    background: linear-gradient(135deg, var(--surface2) 0%, rgba(210,38,48,0.04) 100%);
   }
 
   /* ── FORM ELEMENTS ── */
@@ -174,8 +177,8 @@
     -webkit-appearance: none;
   }
   input:focus, select:focus {
-    border-color: var(--amber);
-    box-shadow: 0 0 0 2px var(--amber-glow);
+    border-color: var(--red);
+    box-shadow: 0 0 0 2px var(--red-glow);
   }
   input::placeholder { color: var(--text-faint); }
   select option { background: var(--surface3); }
@@ -202,8 +205,8 @@
     transition: background 0.15s, color 0.15s;
   }
   .unit-toggle button.active {
-    background: var(--amber);
-    color: #000;
+    background: var(--red);
+    color: #fff;
     font-weight: 500;
   }
 
@@ -218,7 +221,7 @@
     margin-bottom: 0.4rem;
   }
   .check-row:hover { background: var(--surface3); border-color: var(--border); }
-  .check-row.checked { border-color: rgba(240,165,0,0.35); background: rgba(240,165,0,0.06); }
+  .check-row.checked { border-color: rgba(210,38,48,0.35); background: rgba(240,165,0,0.06); }
   .check-box {
     width: 16px; height: 16px;
     border: 1px solid var(--border);
@@ -229,10 +232,10 @@
     transition: background 0.15s, border-color 0.15s;
   }
   .check-row.checked .check-box {
-    background: var(--amber);
-    border-color: var(--amber);
+    background: var(--red);
+    border-color: var(--red);
   }
-  .check-mark { color: #000; font-size: 0.65rem; font-weight: 700; }
+  .check-mark { color: #fff; font-size: 0.65rem; font-weight: 700; }
   .check-label {
     font-family: var(--body);
     font-size: 0.85rem;
@@ -293,16 +296,16 @@
     font-size: 0.75rem; padding: 0;
     font-family: var(--mono);
   }
-  .toggle-visibility:hover { color: var(--amber); }
+  .toggle-visibility:hover { color: var(--red); }
 
   /* ── SUBMIT BUTTON ── */
   .btn-get-rates {
     width: 100%;
     padding: 0.8rem 1rem;
-    background: var(--amber);
+    background: var(--blue);
     border: none;
     border-radius: 3px;
-    color: #000;
+    color: #fff;
     font-family: var(--head);
     font-size: 1rem;
     letter-spacing: 0.15em;
@@ -313,8 +316,8 @@
     overflow: hidden;
   }
   .btn-get-rates:hover:not(:disabled) {
-    background: #ffb820;
-    box-shadow: 0 4px 24px rgba(240,165,0,0.35);
+    background: #0069a8;
+    box-shadow: 0 4px 24px var(--blue-glow);
     transform: translateY(-1px);
   }
   .btn-get-rates:active:not(:disabled) { transform: translateY(0); }
@@ -328,8 +331,8 @@
   }
   .spinner {
     width: 14px; height: 14px;
-    border: 2px solid rgba(0,0,0,0.3);
-    border-top-color: #000;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
   }
@@ -555,9 +558,9 @@
     letter-spacing: 0.05em;
   }
   .sort-btn.active {
-    background: var(--amber-glow);
-    border-color: rgba(240,165,0,0.35);
-    color: var(--amber);
+    background: var(--red-glow);
+    border-color: rgba(210,38,48,0.35);
+    color: var(--red);
   }
   .sort-btn:hover:not(.active) { background: var(--surface3); border-color: var(--border); color: var(--text); }
 
@@ -608,7 +611,30 @@
     transition: background 0.15s, color 0.15s;
     letter-spacing: 0.05em;
   }
-  .view-btn.active { background: var(--amber); color: #000; font-weight: 500; }
+  .view-btn.active { background: var(--red); color: #fff; font-weight: 500; }
+
+  /* ── Dimensions disabled state ── */
+  .dims-disabled {
+    opacity: 0.38;
+    pointer-events: none;
+    user-select: none;
+  }
+  .dim-toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.6rem;
+  }
+  .dim-toggle-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  /* ── Header red accent bar ── */
+  .header-red-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px; background: var(--red);
+  }
 
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -943,6 +969,7 @@ function App() {
     origin_zip: "", origin_state: "", origin_country: "US",
     dest_zip:   "", dest_state:   "", dest_country:   "US",
     weight: "", length: "", width: "", height: "",
+    use_dimensions: true,
     ship_date: today,
     signature_required: false,
     saturday_delivery:  false,
@@ -966,9 +993,9 @@ function App() {
       const body = {
         ...form,
         weight:  parseFloat(form.weight)  || 0,
-        length:  parseFloat(form.length)  || 0,
-        width:   parseFloat(form.width)   || 0,
-        height:  parseFloat(form.height)  || 0,
+        length:  form.use_dimensions ? (parseFloat(form.length) || 0) : 0,
+        width:   form.use_dimensions ? (parseFloat(form.width)  || 0) : 0,
+        height:  form.use_dimensions ? (parseFloat(form.height) || 0) : 0,
         weight_unit: unitMode === "imperial" ? "LBS" : "KGS",
         dim_unit:    unitMode === "imperial" ? "IN"  : "CM",
         credentials: creds,
@@ -1016,12 +1043,15 @@ function App() {
   return (
     <>
       {/* Header */}
-      <header className="app-header">
+      <header className="app-header" style={{position:"relative"}}>
         <div className="logo">
-          <div className="logo-icon" />
-          <div>
-            <div className="logo-text">RATE FINDER</div>
-            <div className="logo-sub">MULTI-CARRIER PARCEL RATING</div>
+          <img
+            src="data:image/png;base64,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"
+            alt="Honeywell"
+            style={{height:"28px", width:"auto"}}
+          />
+          <div style={{marginLeft:"1rem", borderLeft:"1px solid var(--border)", paddingLeft:"1rem"}}>
+            <div style={{fontFamily:"var(--mono)", fontSize:"0.7rem", letterSpacing:"0.12em", color:"var(--text-dim)", textTransform:"uppercase"}}>Parcel Rate Finder</div>
           </div>
         </div>
         <div className="header-badges">
@@ -1029,6 +1059,7 @@ function App() {
           <span className="badge badge-fedex">FedEx</span>
           <span className="badge badge-dhl">DHL</span>
         </div>
+        <div className="header-red-bar" />
       </header>
 
       <div className="app-layout">
@@ -1098,24 +1129,42 @@ function App() {
           <div>
             <div className="section-label">Package</div>
             <div className="panel">
-              <div className="form-row" style={{marginBottom:"0.6rem"}}>
+              <div className="form-row" style={{marginBottom:"0.75rem"}}>
                 <div className="form-group">
                   <label>Weight ({unitMode === "imperial" ? "lbs" : "kg"})</label>
                   <input type="number" min="0.1" step="0.1" value={form.weight} onChange={e => setField("weight", e.target.value)} placeholder="0.0"/>
                 </div>
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>L ({unitMode === "imperial" ? "in" : "cm"})</label>
-                  <input type="number" min="1" step="0.1" value={form.length} onChange={e => setField("length", e.target.value)} placeholder="0"/>
+              {/* Dimensions toggle */}
+              <div className="dim-toggle-row">
+                <span className="dim-toggle-label">Dimensions</span>
+                <div className="unit-toggle" style={{width:"auto"}}>
+                  <button
+                    style={{padding:"3px 12px"}}
+                    className={form.use_dimensions ? "active" : ""}
+                    onClick={() => setField("use_dimensions", true)}
+                  >On</button>
+                  <button
+                    style={{padding:"3px 12px"}}
+                    className={!form.use_dimensions ? "active" : ""}
+                    onClick={() => setField("use_dimensions", false)}
+                  >Off</button>
                 </div>
-                <div className="form-group">
-                  <label>W ({unitMode === "imperial" ? "in" : "cm"})</label>
-                  <input type="number" min="1" step="0.1" value={form.width} onChange={e => setField("width", e.target.value)} placeholder="0"/>
-                </div>
-                <div className="form-group">
-                  <label>H ({unitMode === "imperial" ? "in" : "cm"})</label>
-                  <input type="number" min="1" step="0.1" value={form.height} onChange={e => setField("height", e.target.value)} placeholder="0"/>
+              </div>
+              <div className={form.use_dimensions ? "" : "dims-disabled"}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>L ({unitMode === "imperial" ? "in" : "cm"})</label>
+                    <input type="number" min="1" step="0.1" value={form.length} onChange={e => setField("length", e.target.value)} placeholder="0" tabIndex={form.use_dimensions ? 0 : -1}/>
+                  </div>
+                  <div className="form-group">
+                    <label>W ({unitMode === "imperial" ? "in" : "cm"})</label>
+                    <input type="number" min="1" step="0.1" value={form.width} onChange={e => setField("width", e.target.value)} placeholder="0" tabIndex={form.use_dimensions ? 0 : -1}/>
+                  </div>
+                  <div className="form-group">
+                    <label>H ({unitMode === "imperial" ? "in" : "cm"})</label>
+                    <input type="number" min="1" step="0.1" value={form.height} onChange={e => setField("height", e.target.value)} placeholder="0" tabIndex={form.use_dimensions ? 0 : -1}/>
+                  </div>
                 </div>
               </div>
             </div>

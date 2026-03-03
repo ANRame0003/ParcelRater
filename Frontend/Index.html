@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RATE FINDER — Parcel Shipping Rates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root {
+    --bg:          #080c12;
+    --surface:     #0f1520;
+    --surface2:    #172030;
+    --surface3:    #1e2a3d;
+    --border:      #253045;
+    --border-dim:  #1a2438;
+    --amber:       #f0a500;
+    --amber-glow:  rgba(240,165,0,0.12);
+    --amber-dim:   #b07c00;
+    --text:        #dde6f4;
+    --text-dim:    #7a8ba8;
+    --text-faint:  #3d4f68;
+    --red:         #e05555;
+    --green:       #4eca7e;
+    --ups:         #c2672d;
+    --fedex:       #7b3fbf;
+    --dhl:         #d4a800;
+    --mono:        'DM Mono', monospace;
+    --head:        'Oswald', sans-serif;
+    --body:        'Barlow', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    min-height: 100vh;
+    background-image:
+      linear-gradient(0deg, transparent 24%, rgba(255,255,255,.012) 25%, rgba(255,255,255,.012) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.012) 75%, rgba(255,255,255,.012) 76%, transparent 77%, transparent),
+      linear-gradient(90deg, transparent 24%, rgba(255,255,255,.012) 25%, rgba(255,255,255,.012) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.012) 75%, rgba(255,255,255,.012) 76%, transparent 77%, transparent);
+    background-size: 60px 60px;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8,12,18,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--amber);
+    clip-path: polygon(0 20%, 50% 0, 100% 20%, 100% 80%, 50% 100%, 0 80%);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-text {
+    font-family: var(--head);
+    font-size: 1.1rem;
+    letter-spacing: 0.18em;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .logo-sub {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    margin-top: 1px;
+  }
+  .header-badges {
+    display: flex; gap: 0.5rem; align-items: center;
+  }
+  .badge {
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    border: 1px solid;
+  }
+  .badge-ups   { color: var(--ups);   border-color: rgba(194,103,45,0.35);  background: rgba(194,103,45,0.08); }
+  .badge-fedex { color: var(--fedex); border-color: rgba(123,63,191,0.35); background: rgba(123,63,191,0.08);}
+  .badge-dhl   { color: var(--dhl);   border-color: rgba(212,168,0,0.35);  background: rgba(212,168,0,0.08); }
+
+  /* ── LAYOUT ── */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: calc(100vh - 56px);
+  }
+  @media (max-width: 900px) {
+    .app-layout { grid-template-columns: 1fr; }
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border-dim);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 56px);
+    position: sticky;
+    top: 56px;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: var(--head);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-dim);
+  }
+
+  /* ── PANEL BLOCK ── */
+  .panel {
+    background: var(--surface2);
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    padding: 1rem;
+  }
+  .panel.highlighted {
+    border-color: rgba(240,165,0,0.2);
+    background: linear-gradient(135deg, var(--surface2) 0%, rgba(240,165,0,0.04) 100%);
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .form-row { display: flex; gap: 0.75rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; }
+  label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  input, select {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 3px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 2px var(--amber-glow);
+  }
+  input::placeholder { color: var(--text-faint); }
+  select option { background: var(--surface3); }
+
+  /* ── UNIT TOGGLE ── */
+  .unit-toggle {
+    display: flex;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    width: 100%;
+  }
+  .unit-toggle button {
+    flex: 1;
+    padding: 0.45rem;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .unit-toggle button.active {
+    background: var(--amber);
+    color: #000;
+    font-weight: 500;
+  }
+
+  /* ── CHECKBOX TOGGLE ── */
+  .check-row {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    margin-bottom: 0.4rem;
+  }
+  .check-row:hover { background: var(--surface3); border-color: var(--border); }
+  .check-row.checked { border-color: rgba(240,165,0,0.35); background: rgba(240,165,0,0.06); }
+  .check-box {
+    width: 16px; height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--surface3);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .check-row.checked .check-box {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
+  .check-mark { color: #000; font-size: 0.65rem; font-weight: 700; }
+  .check-label {
+    font-family: var(--body);
+    font-size: 0.85rem;
+    color: var(--text);
+    user-select: none;
+  }
+  .check-desc {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  /* ── API KEYS COLLAPSIBLE ── */
+  .api-header {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+    padding: 0.6rem 0;
+  }
+  .api-header-left { display: flex; align-items: center; gap: 0.6rem; }
+  .api-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text-faint);
+    transition: background 0.2s;
+  }
+  .api-dot.ok   { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .api-dot.warn { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+  .api-section-title {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .api-chevron {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    transition: transform 0.2s;
+  }
+  .api-chevron.open { transform: rotate(180deg); }
+  .api-fields { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.75rem; }
+  .api-carrier-label {
+    font-family: var(--head);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    padding: 0.2rem 0;
+    margin-bottom: 0.2rem;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .api-carrier-label.ups   { color: var(--ups); }
+  .api-carrier-label.fedex { color: var(--fedex); }
+  .api-carrier-label.dhl   { color: var(--dhl); }
+  .input-password-wrapper { position: relative; }
+  .input-password-wrapper input { padding-right: 2.5rem; }
+  .toggle-visibility {
+    position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: var(--text-dim);
+    font-size: 0.75rem; padding: 0;
+    font-family: var(--mono);
+  }
+  .toggle-visibility:hover { color: var(--amber); }
+
+  /* ── SUBMIT BUTTON ── */
+  .btn-get-rates {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: var(--amber);
+    border: none;
+    border-radius: 3px;
+    color: #000;
+    font-family: var(--head);
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-get-rates:hover:not(:disabled) {
+    background: #ffb820;
+    box-shadow: 0 4px 24px rgba(240,165,0,0.35);
+    transform: translateY(-1px);
+  }
+  .btn-get-rates:active:not(:disabled) { transform: translateY(0); }
+  .btn-get-rates:disabled {
+    background: var(--surface3);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+  .btn-loading {
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+  }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── MAIN CONTENT ── */
+  .main-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 400px;
+    opacity: 0.5;
+  }
+  .empty-icon {
+    width: 64px; height: 64px;
+    border: 2px dashed var(--border);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+  }
+  .empty-text {
+    font-family: var(--head);
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .empty-sub {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    text-align: center;
+  }
+
+  /* ── RESULTS HEADER ── */
+  .results-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .results-title {
+    font-family: var(--head);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .results-count {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-faint);
+  }
+  .results-meta {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    margin-top: 0.2rem;
+  }
+
+  /* ── CARRIER SECTION ── */
+  .carrier-section { margin-bottom: 1.25rem; }
+  .carrier-header {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    border-radius: 3px 3px 0 0;
+    border: 1px solid;
+    border-bottom: none;
+  }
+  .carrier-header.ups   { background: rgba(194,103,45,0.1); border-color: rgba(194,103,45,0.25); }
+  .carrier-header.fedex { background: rgba(123,63,191,0.1); border-color: rgba(123,63,191,0.25); }
+  .carrier-header.dhl   { background: rgba(212,168,0,0.1);  border-color: rgba(212,168,0,0.25);  }
+  .carrier-name {
+    font-family: var(--head);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .carrier-header.ups   .carrier-name { color: var(--ups);   }
+  .carrier-header.fedex .carrier-name { color: var(--fedex); }
+  .carrier-header.dhl   .carrier-name { color: var(--dhl);   }
+  .carrier-count {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-dim);
+  }
+  .carrier-error-msg {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--red);
+    margin-left: auto;
+    max-width: 60%;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── RATE TABLE ── */
+  .rate-table-wrap {
+    border: 1px solid;
+    border-radius: 0 0 3px 3px;
+    overflow: hidden;
+  }
+  .ups-wrap   { border-color: rgba(194,103,45,0.2); }
+  .fedex-wrap { border-color: rgba(123,63,191,0.2); }
+  .dhl-wrap   { border-color: rgba(212,168,0,0.2);  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border-dim);
+  }
+  th {
+    padding: 0.55rem 0.75rem;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 400;
+    white-space: nowrap;
+  }
+  th:first-child { text-align: left; }
+  tbody tr {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-dim);
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr.best-rate { background: rgba(78,202,126,0.05); }
+  td {
+    padding: 0.65rem 0.75rem;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  td:first-child { text-align: left; }
+  .svc-name {
+    font-family: var(--body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .svc-code {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-faint);
+    margin-top: 1px;
+  }
+  .price { font-weight: 500; }
+  .price.total { font-size: 0.95rem; }
+  .price.freight { color: var(--text-dim); }
+  .price.fuel    { color: var(--text-dim); }
+  .price.access  { color: var(--text-dim); }
+  .best-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(78,202,126,0.15);
+    color: var(--green);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
+    border-radius: 2px;
+    border: 1px solid rgba(78,202,126,0.25);
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+  .delivery-date {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+  .transit {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .na { color: var(--text-faint); font-size: 0.72rem; }
+
+  /* ── SORT BAR ── */
+  .sort-bar {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .sort-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .sort-btn {
+    padding: 4px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border-dim);
+    border-radius: 2px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .sort-btn.active {
+    background: var(--amber-glow);
+    border-color: rgba(240,165,0,0.35);
+    color: var(--amber);
+  }
+  .sort-btn:hover:not(.active) { background: var(--surface3); border-color: var(--border); color: var(--text); }
+
+  /* ── ERROR BANNER ── */
+  .error-banner {
+    background: rgba(224,85,85,0.1);
+    border: 1px solid rgba(224,85,85,0.25);
+    border-radius: 3px;
+    padding: 0.75rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--red);
+    margin-bottom: 1rem;
+  }
+
+  /* ── UNIFIED TABLE MODE ── */
+  .unified-table-wrap { overflow-x: auto; }
+  .carrier-pill {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--head);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .carrier-pill.ups   { color: var(--ups);   background: rgba(194,103,45,0.12); }
+  .carrier-pill.fedex { color: var(--fedex); background: rgba(123,63,191,0.12); }
+  .carrier-pill.dhl   { color: var(--dhl);   background: rgba(212,168,0,0.12);  }
+
+  /* ── VIEW TOGGLE ── */
+  .view-toggle {
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .view-btn {
+    padding: 4px 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .view-btn.active { background: var(--amber); color: #000; font-weight: 500; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-dim); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.25s ease forwards; }
+  .fade-in-delay-1 { animation: fadeIn 0.25s ease 0.05s both; }
+  .fade-in-delay-2 { animation: fadeIn 0.25s ease 0.1s  both; }
+  .fade-in-delay-3 { animation: fadeIn 0.25s ease 0.15s both; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border-dim);
+    margin: 0.25rem 0;
+  }
+
+  /* ── COUNTRY SELECT ── */
+  .country-select { font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useCallback, useMemo } = React;
+
+// Empty string = relative URL, so nginx proxies /api/... to the backend container.
+// Change to "http://localhost:8000" if running the frontend outside Docker.
+const API_BASE = "";
+
+const US_STATES = [
+  ["AL","Alabama"],["AK","Alaska"],["AZ","Arizona"],["AR","Arkansas"],["CA","California"],
+  ["CO","Colorado"],["CT","Connecticut"],["DE","Delaware"],["FL","Florida"],["GA","Georgia"],
+  ["HI","Hawaii"],["ID","Idaho"],["IL","Illinois"],["IN","Indiana"],["IA","Iowa"],
+  ["KS","Kansas"],["KY","Kentucky"],["LA","Louisiana"],["ME","Maine"],["MD","Maryland"],
+  ["MA","Massachusetts"],["MI","Michigan"],["MN","Minnesota"],["MS","Mississippi"],["MO","Missouri"],
+  ["MT","Montana"],["NE","Nebraska"],["NV","Nevada"],["NH","New Hampshire"],["NJ","New Jersey"],
+  ["NM","New Mexico"],["NY","New York"],["NC","North Carolina"],["ND","North Dakota"],["OH","Ohio"],
+  ["OK","Oklahoma"],["OR","Oregon"],["PA","Pennsylvania"],["RI","Rhode Island"],["SC","South Carolina"],
+  ["SD","South Dakota"],["TN","Tennessee"],["TX","Texas"],["UT","Utah"],["VT","Vermont"],
+  ["VA","Virginia"],["WA","Washington"],["WV","West Virginia"],["WI","Wisconsin"],["WY","Wyoming"],
+  ["DC","District of Columbia"],["PR","Puerto Rico"],["VI","U.S. Virgin Islands"],["GU","Guam"],
+];
+
+const CA_PROVINCES = [
+  ["AB","Alberta"],["BC","British Columbia"],["MB","Manitoba"],["NB","New Brunswick"],
+  ["NL","Newfoundland and Labrador"],["NS","Nova Scotia"],["NT","Northwest Territories"],
+  ["NU","Nunavut"],["ON","Ontario"],["PE","Prince Edward Island"],["QC","Quebec"],
+  ["SK","Saskatchewan"],["YT","Yukon"],
+];
+
+const AU_STATES = [
+  ["ACT","Australian Capital Territory"],["NSW","New South Wales"],["NT","Northern Territory"],
+  ["QLD","Queensland"],["SA","South Australia"],["TAS","Tasmania"],["VIC","Victoria"],["WA","Western Australia"],
+];
+
+function StateField({ country, value, onChange }) {
+  const dropdowns = { US: US_STATES, CA: CA_PROVINCES, AU: AU_STATES };
+  const options = dropdowns[country];
+
+  if (options) {
+    return (
+      <div className="form-group">
+        <label>State / Province</label>
+        <select value={value} onChange={e => onChange(e.target.value)} className="country-select">
+          <option value="">— Select —</option>
+          {options.map(([code, name]) => (
+            <option key={code} value={code}>{code} – {name}</option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+  return (
+    <div className="form-group">
+      <label>State / Province</label>
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value.toUpperCase())}
+        placeholder="e.g. TX"
+        maxLength={3}
+        style={{textTransform:"uppercase"}}
+      />
+    </div>
+  );
+}
+
+const COUNTRIES = [
+  ["US","United States"],["CA","Canada"],["GB","United Kingdom"],
+  ["AU","Australia"],["DE","Germany"],["FR","France"],["JP","Japan"],
+  ["CN","China"],["MX","Mexico"],["BR","Brazil"],["IN","India"],
+  ["SG","Singapore"],["HK","Hong Kong"],["NL","Netherlands"],
+  ["IT","Italy"],["ES","Spain"],["KR","South Korea"],["SE","Sweden"],
+  ["CH","Switzerland"],["BE","Belgium"],["AT","Austria"],["DK","Denmark"],
+  ["NO","Norway"],["FI","Finland"],["PL","Poland"],["NZ","New Zealand"],
+  ["ZA","South Africa"],["AE","UAE"],["SA","Saudi Arabia"],["IL","Israel"],
+];
+
+const formatMoney = (val, currency = "USD") => {
+  if (!val && val !== 0) return <span className="na">—</span>;
+  return `${currency === "USD" ? "$" : ""}${Number(val).toFixed(2)}${currency !== "USD" ? ` ${currency}` : ""}`;
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return <span className="na">—</span>;
+  try {
+    const d = new Date(dateStr + "T12:00:00Z");
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  } catch { return dateStr; }
+};
+
+// ── Password Field ──────────────────────────────────────────────────────────
+function PasswordField({ label, value, onChange, placeholder }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="form-group">
+      <label>{label}</label>
+      <div className="input-password-wrapper">
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder || "Enter key…"}
+          autoComplete="off"
+          spellCheck={false}
+        />
+        <button className="toggle-visibility" type="button" onClick={() => setShow(v => !v)}>
+          {show ? "HIDE" : "SHOW"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── API Keys Panel ──────────────────────────────────────────────────────────
+function ApiKeysPanel({ creds, setCreds }) {
+  const [open, setOpen] = useState(false);
+  const hasAny = creds.ups_client_id || creds.fedex_client_id || creds.dhl_api_key;
+
+  return (
+    <div className="panel">
+      <div className="api-header" onClick={() => setOpen(v => !v)}>
+        <div className="api-header-left">
+          <div className={`api-dot ${hasAny ? "ok" : "warn"}`} />
+          <span className="api-section-title">API Credentials</span>
+        </div>
+        <span className={`api-chevron ${open ? "open" : ""}`}>▼</span>
+      </div>
+      {open && (
+        <div className="api-fields fade-in">
+          <div className="api-carrier-label ups">UPS</div>
+          <div className="form-group">
+            <label>Client ID</label>
+            <input value={creds.ups_client_id} onChange={e => setCreds(c => ({...c, ups_client_id: e.target.value}))} placeholder="UPS Client ID…" autoComplete="off" spellCheck={false}/>
+          </div>
+          <PasswordField label="Client Secret" value={creds.ups_client_secret} onChange={v => setCreds(c => ({...c, ups_client_secret: v}))} />
+          <div className="divider" />
+          <div className="api-carrier-label fedex">FedEx</div>
+          <div className="form-group">
+            <label>Client ID</label>
+            <input value={creds.fedex_client_id} onChange={e => setCreds(c => ({...c, fedex_client_id: e.target.value}))} placeholder="FedEx Client ID…" autoComplete="off" spellCheck={false}/>
+          </div>
+          <PasswordField label="Client Secret" value={creds.fedex_client_secret} onChange={v => setCreds(c => ({...c, fedex_client_secret: v}))} />
+          <div className="divider" />
+          <div className="api-carrier-label dhl">DHL</div>
+          <PasswordField label="API Key" value={creds.dhl_api_key} onChange={v => setCreds(c => ({...c, dhl_api_key: v}))} placeholder="DHL API Key…"/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Check Row ───────────────────────────────────────────────────────────────
+function CheckRow({ checked, onChange, label, desc }) {
+  return (
+    <div className={`check-row ${checked ? "checked" : ""}`} onClick={() => onChange(!checked)}>
+      <div className="check-box">{checked && <span className="check-mark">✓</span>}</div>
+      <span className="check-label">{label}</span>
+      {desc && <span className="check-desc">{desc}</span>}
+    </div>
+  );
+}
+
+// ── Rate Table ──────────────────────────────────────────────────────────────
+function RateTable({ rates, bestId, carrier }) {
+  const cls = carrier.toLowerCase();
+  const errors = rates.filter(r => r.error);
+  const valid  = rates.filter(r => !r.error);
+
+  return (
+    <div className="carrier-section fade-in">
+      <div className={`carrier-header ${cls}`}>
+        <span className="carrier-name">{carrier}</span>
+        <span className="carrier-count">{valid.length} service{valid.length !== 1 ? "s" : ""}</span>
+        {errors.length > 0 && (
+          <span className="carrier-error-msg" title={errors[0].error}>⚠ {errors[0].error}</span>
+        )}
+      </div>
+      <div className={`rate-table-wrap ${cls}-wrap`}>
+        {valid.length > 0 ? (
+          <table>
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Freight</th>
+                <th>Fuel</th>
+                <th>Accessorials</th>
+                <th>Total</th>
+                <th>Delivery</th>
+              </tr>
+            </thead>
+            <tbody>
+              {valid.map((r, i) => {
+                const isBest = `${r.carrier}-${r.service_code}-${i}` === bestId;
+                return (
+                  <tr key={i} className={isBest ? "best-rate" : ""}>
+                    <td>
+                      <div className="svc-name">
+                        {r.service_name}
+                        {isBest && <span className="best-badge">★ BEST RATE</span>}
+                      </div>
+                      {r.service_code && <div className="svc-code">{r.service_code}</div>}
+                    </td>
+                    <td><span className="price freight">{formatMoney(r.freight_charge, r.currency)}</span></td>
+                    <td><span className="price fuel">{formatMoney(r.fuel_surcharge, r.currency)}</span></td>
+                    <td><span className="price access">{r.accessorial_charges > 0 ? formatMoney(r.accessorial_charges, r.currency) : <span className="na">—</span>}</span></td>
+                    <td><span className="price total">{formatMoney(r.total_charge, r.currency)}</span></td>
+                    <td>
+                      <div className="delivery-date">{formatDate(r.estimated_delivery)}</div>
+                      {r.transit_days && <div className="transit">{r.transit_days}d transit</div>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : errors.length > 0 ? (
+          <div style={{padding: "1rem", fontFamily: "var(--mono)", fontSize: "0.75rem", color: "var(--red)"}}>
+            {errors[0].error}
+          </div>
+        ) : (
+          <div style={{padding: "1rem", fontFamily: "var(--mono)", fontSize: "0.75rem", color: "var(--text-faint)"}}>
+            No rates available
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Unified Table ────────────────────────────────────────────────────────────
+function UnifiedTable({ rates, bestId, sortBy }) {
+  const valid = rates.filter(r => !r.error);
+  const sorted = useMemo(() => {
+    return [...valid].sort((a, b) => {
+      if (sortBy === "price") return a.total_charge - b.total_charge;
+      if (sortBy === "delivery") {
+        if (!a.estimated_delivery) return 1;
+        if (!b.estimated_delivery) return -1;
+        return a.estimated_delivery.localeCompare(b.estimated_delivery);
+      }
+      return a.carrier.localeCompare(b.carrier);
+    });
+  }, [valid, sortBy]);
+
+  return (
+    <div className="unified-table-wrap fade-in">
+      <div className="rate-table-wrap ups-wrap" style={{borderColor:"var(--border)"}}>
+        <table>
+          <thead>
+            <tr>
+              <th>Carrier</th>
+              <th style={{textAlign:"left"}}>Service</th>
+              <th>Freight</th>
+              <th>Fuel</th>
+              <th>Accessorials</th>
+              <th>Total</th>
+              <th>Delivery</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((r, i) => {
+              const cls = r.carrier.toLowerCase();
+              const isBest = `${r.carrier}-${r.service_code}-${rates.indexOf(r)}` === bestId;
+              return (
+                <tr key={i} className={isBest ? "best-rate" : ""}>
+                  <td><span className={`carrier-pill ${cls}`}>{r.carrier}</span></td>
+                  <td style={{textAlign:"left"}}>
+                    <div className="svc-name">
+                      {r.service_name}
+                      {isBest && <span className="best-badge">★ BEST</span>}
+                    </div>
+                    {r.service_code && <div className="svc-code">{r.service_code}</div>}
+                  </td>
+                  <td><span className="price freight">{formatMoney(r.freight_charge, r.currency)}</span></td>
+                  <td><span className="price fuel">{formatMoney(r.fuel_surcharge, r.currency)}</span></td>
+                  <td><span className="price access">{r.accessorial_charges > 0 ? formatMoney(r.accessorial_charges, r.currency) : <span className="na">—</span>}</span></td>
+                  <td><span className="price total">{formatMoney(r.total_charge, r.currency)}</span></td>
+                  <td>
+                    <div className="delivery-date">{formatDate(r.estimated_delivery)}</div>
+                    {r.transit_days && <div className="transit">{r.transit_days}d transit</div>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ─────────────────────────────────────────────────────────────────
+function App() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [creds, setCreds] = useState({
+    ups_client_id: "", ups_client_secret: "",
+    fedex_client_id: "", fedex_client_secret: "",
+    dhl_api_key: "",
+  });
+
+  const [form, setForm] = useState({
+    origin_zip: "", origin_state: "", origin_country: "US",
+    dest_zip:   "", dest_state:   "", dest_country:   "US",
+    weight: "", length: "", width: "", height: "",
+    ship_date: today,
+    signature_required: false,
+    saturday_delivery:  false,
+    residential:        false,
+  });
+
+  const [unitMode, setUnitMode] = useState("imperial"); // "imperial" | "metric"
+  const [loading, setLoading]   = useState(false);
+  const [results, setResults]   = useState(null);
+  const [error,   setError]     = useState(null);
+  const [viewMode, setViewMode] = useState("carrier");  // "carrier" | "unified"
+  const [sortBy,   setSortBy]   = useState("price");
+
+  const setField = (k, v) => setForm(f => ({...f, [k]: v}));
+
+  const handleSubmit = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResults(null);
+    try {
+      const body = {
+        ...form,
+        weight:  parseFloat(form.weight)  || 0,
+        length:  parseFloat(form.length)  || 0,
+        width:   parseFloat(form.width)   || 0,
+        height:  parseFloat(form.height)  || 0,
+        weight_unit: unitMode === "imperial" ? "LBS" : "KGS",
+        dim_unit:    unitMode === "imperial" ? "IN"  : "CM",
+        credentials: creds,
+      };
+      const res = await fetch(`${API_BASE}/api/rates`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error ${res.status}: ${text.slice(0, 200)}`);
+      }
+      const data = await res.json();
+      setResults(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [form, creds, unitMode]);
+
+  // Group results by carrier
+  const grouped = useMemo(() => {
+    if (!results) return {};
+    return results.reduce((acc, r) => {
+      if (!acc[r.carrier]) acc[r.carrier] = [];
+      acc[r.carrier].push(r);
+      return acc;
+    }, {});
+  }, [results]);
+
+  // Find the single best rate (lowest total, no error)
+  const bestId = useMemo(() => {
+    if (!results) return null;
+    const valid = results.filter(r => !r.error && r.total_charge > 0);
+    if (!valid.length) return null;
+    const best = valid.reduce((a, b) => a.total_charge <= b.total_charge ? a : b);
+    const idx  = results.indexOf(best);
+    return `${best.carrier}-${best.service_code}-${idx}`;
+  }, [results]);
+
+  const totalValid = useMemo(() => results ? results.filter(r => !r.error).length : 0, [results]);
+
+  return (
+    <>
+      {/* Header */}
+      <header className="app-header">
+        <div className="logo">
+          <div className="logo-icon" />
+          <div>
+            <div className="logo-text">RATE FINDER</div>
+            <div className="logo-sub">MULTI-CARRIER PARCEL RATING</div>
+          </div>
+        </div>
+        <div className="header-badges">
+          <span className="badge badge-ups">UPS</span>
+          <span className="badge badge-fedex">FedEx</span>
+          <span className="badge badge-dhl">DHL</span>
+        </div>
+      </header>
+
+      <div className="app-layout">
+        {/* Sidebar */}
+        <aside className="sidebar">
+          {/* API Keys */}
+          <ApiKeysPanel creds={creds} setCreds={setCreds} />
+
+          {/* Units */}
+          <div>
+            <div className="section-label">Units</div>
+            <div className="unit-toggle">
+              <button className={unitMode === "imperial" ? "active" : ""} onClick={() => setUnitMode("imperial")}>
+                LBS / IN
+              </button>
+              <button className={unitMode === "metric"   ? "active" : ""} onClick={() => setUnitMode("metric")}>
+                KG / CM
+              </button>
+            </div>
+          </div>
+
+          {/* Origin */}
+          <div>
+            <div className="section-label">Origin</div>
+            <div className="panel">
+              <div className="form-row" style={{marginBottom:"0.6rem"}}>
+                <div className="form-group" style={{flex:2}}>
+                  <label>ZIP / Postal Code</label>
+                  <input value={form.origin_zip} onChange={e => setField("origin_zip", e.target.value)} placeholder="e.g. 90210"/>
+                </div>
+                <div className="form-group">
+                  <label>Country</label>
+                  <select className="country-select" value={form.origin_country} onChange={e => { setField("origin_country", e.target.value); setField("origin_state", ""); }}>
+                    {COUNTRIES.map(([code, name]) => (
+                      <option key={code} value={code}>{code} – {name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <StateField country={form.origin_country} value={form.origin_state} onChange={v => setField("origin_state", v)} />
+            </div>
+          </div>
+
+          {/* Destination */}
+          <div>
+            <div className="section-label">Destination</div>
+            <div className="panel">
+              <div className="form-row" style={{marginBottom:"0.6rem"}}>
+                <div className="form-group" style={{flex:2}}>
+                  <label>ZIP / Postal Code</label>
+                  <input value={form.dest_zip} onChange={e => setField("dest_zip", e.target.value)} placeholder="e.g. 10001"/>
+                </div>
+                <div className="form-group">
+                  <label>Country</label>
+                  <select className="country-select" value={form.dest_country} onChange={e => { setField("dest_country", e.target.value); setField("dest_state", ""); }}>
+                    {COUNTRIES.map(([code, name]) => (
+                      <option key={code} value={code}>{code} – {name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <StateField country={form.dest_country} value={form.dest_state} onChange={v => setField("dest_state", v)} />
+            </div>
+          </div>
+
+          {/* Package */}
+          <div>
+            <div className="section-label">Package</div>
+            <div className="panel">
+              <div className="form-row" style={{marginBottom:"0.6rem"}}>
+                <div className="form-group">
+                  <label>Weight ({unitMode === "imperial" ? "lbs" : "kg"})</label>
+                  <input type="number" min="0.1" step="0.1" value={form.weight} onChange={e => setField("weight", e.target.value)} placeholder="0.0"/>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>L ({unitMode === "imperial" ? "in" : "cm"})</label>
+                  <input type="number" min="1" step="0.1" value={form.length} onChange={e => setField("length", e.target.value)} placeholder="0"/>
+                </div>
+                <div className="form-group">
+                  <label>W ({unitMode === "imperial" ? "in" : "cm"})</label>
+                  <input type="number" min="1" step="0.1" value={form.width} onChange={e => setField("width", e.target.value)} placeholder="0"/>
+                </div>
+                <div className="form-group">
+                  <label>H ({unitMode === "imperial" ? "in" : "cm"})</label>
+                  <input type="number" min="1" step="0.1" value={form.height} onChange={e => setField("height", e.target.value)} placeholder="0"/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Ship Date */}
+          <div>
+            <div className="section-label">Ship Date</div>
+            <div className="panel">
+              <div className="form-group">
+                <label>Date</label>
+                <input type="date" value={form.ship_date} min={today} onChange={e => setField("ship_date", e.target.value)}/>
+              </div>
+            </div>
+          </div>
+
+          {/* Options */}
+          <div>
+            <div className="section-label">Options</div>
+            <div>
+              <CheckRow checked={form.residential}        onChange={v => setField("residential", v)}        label="Residential Delivery" desc="+surcharge" />
+              <CheckRow checked={form.signature_required} onChange={v => setField("signature_required", v)} label="Signature Required"    desc="+fee" />
+              <CheckRow checked={form.saturday_delivery}  onChange={v => setField("saturday_delivery", v)}  label="Saturday Delivery"    desc="+fee" />
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            className="btn-get-rates"
+            onClick={handleSubmit}
+            disabled={loading || !form.origin_zip || !form.dest_zip || !form.weight}
+          >
+            {loading
+              ? <span className="btn-loading"><span className="spinner"/> FETCHING RATES…</span>
+              : "GET RATES →"
+            }
+          </button>
+        </aside>
+
+        {/* Main Content */}
+        <main className="main-content">
+          {error && (
+            <div className="error-banner fade-in">
+              ⚠ {error}
+            </div>
+          )}
+
+          {!results && !loading && !error && (
+            <div className="empty-state">
+              <div className="empty-icon">📦</div>
+              <div className="empty-text">No Rates Yet</div>
+              <div className="empty-sub">
+                Enter shipment details and click<br/>GET RATES to compare carriers
+              </div>
+            </div>
+          )}
+
+          {results && (
+            <>
+              <div className="results-header fade-in">
+                <div>
+                  <div className="results-title">Rate Results</div>
+                  <div className="results-meta">
+                    {totalValid} rate{totalValid !== 1 ? "s" : ""} found
+                    {form.origin_zip && form.dest_zip && ` · ${form.origin_zip}${form.origin_state ? " " + form.origin_state : ""} ${form.origin_country} → ${form.dest_zip}${form.dest_state ? " " + form.dest_state : ""} ${form.dest_country}`}
+                    {form.weight && ` · ${form.weight} ${unitMode === "imperial" ? "lbs" : "kg"}`}
+                  </div>
+                </div>
+                <div style={{display:"flex", gap:"0.75rem", alignItems:"center"}}>
+                  {viewMode === "unified" && (
+                    <div className="sort-bar" style={{margin:0}}>
+                      <span className="sort-label">Sort:</span>
+                      {["price","delivery","carrier"].map(s => (
+                        <button key={s} className={`sort-btn ${sortBy === s ? "active" : ""}`} onClick={() => setSortBy(s)}>
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="view-toggle">
+                    <button className={`view-btn ${viewMode === "carrier"  ? "active" : ""}`} onClick={() => setViewMode("carrier")}>By Carrier</button>
+                    <button className={`view-btn ${viewMode === "unified"  ? "active" : ""}`} onClick={() => setViewMode("unified")}>All Rates</button>
+                  </div>
+                </div>
+              </div>
+
+              {viewMode === "carrier"
+                ? ["UPS", "FedEx", "DHL"].map((carrier, i) => (
+                    grouped[carrier] ? (
+                      <div key={carrier} className={`fade-in-delay-${i+1}`}>
+                        <RateTable
+                          rates={grouped[carrier]}
+                          bestId={bestId}
+                          carrier={carrier}
+                        />
+                      </div>
+                    ) : null
+                  ))
+                : <UnifiedTable rates={results} bestId={bestId} sortBy={sortBy} />
+              }
+            </>
+          )}
+        </main>
+      </div>
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>

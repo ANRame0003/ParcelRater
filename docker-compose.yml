@@ -16,7 +16,7 @@ services:
       start_period: 10s
 
   frontend:
-    build: ./frontend
+    build: ./Frontend
     container_name: ratefinder-frontend
     restart: unless-stopped
     ports:

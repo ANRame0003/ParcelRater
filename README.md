@@ -14,7 +14,7 @@ cd rate-finder
 docker compose up --build
 ```
 
-Open **http://localhost** in your browser. That's it.
+Open **http://localhost:3005** in your browser. That's it.
 
 > **Only requirement:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Compose).
 

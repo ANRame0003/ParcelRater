@@ -10,7 +10,7 @@ A FastAPI backend with a React frontend, containerized with Docker Compose.
 
 ```bash
 git clone <your-repo-url>
-cd rate-finder
+cd ParcelRater
 docker compose up --build
 ```
 
